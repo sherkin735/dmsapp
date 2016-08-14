@@ -36,7 +36,7 @@
                         <form action="" method="post" role="form">
                             <fieldset>
                                 <div class="form-group">
-                                    <input class="form-control" placeholder="E-mail" name="username" type="username" value="{{ request.form.username }}" autofocus>
+                                    <input class="form-control" id="inputSuccess" placeholder="E-mail" name="username" type="text" value="{{ request.form.username }}" autofocus>
                                 </div>
                                 <div class="form-group">
                                     <input class="form-control" placeholder="Password" name="password" type="password" value = "{{ request.form.password }}" value="">
@@ -47,7 +47,7 @@
                                     </label>
                                 </div>
                                 <div class="form-button">
-                                    <input class="btn btn-default" type="submit" value="Login">
+                                    <button class="btn btn-primary" type="submit">Login</button>
                                 </div>
                                 <!-- <a href="/login_action" class="btn btn-lg btn-success btn-block">Login</a> -->
                                 <div style="margin: 15px;" class="form-button">
@@ -57,9 +57,13 @@
                         </form>
                         </br>
                         <div class="form-button">
-                        {% if error %}
-                            <p class="error"><strong>Error:</strong> {{ error }}
-                        {% endif %}
+                        {% with messages = get_flashed_messages() %}
+                            {% if messages %}
+                                {% for message in messages %}
+                                    {{ message }}
+                                {% endfor %}
+                            {% endif %}
+                        {% endwith %}
                         </div>
                     </div>
                 </div>

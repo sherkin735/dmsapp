@@ -1,11 +1,10 @@
-#!/var/www/dmsapp/venv/bin/python2.7
-
-# -*- coding: utf-8 -*-
-import re
+#!/Users/william/Desktop/dmsapp/venv/bin/python
+# EASY-INSTALL-ENTRY-SCRIPT: 'Flask==0.11.1','console_scripts','flask'
+__requires__ = 'Flask==0.11.1'
 import sys
-
-from flask.cli import main
+from pkg_resources import load_entry_point
 
 if __name__ == '__main__':
-    sys.argv[0] = re.sub(r'(-script\.pyw|\.exe)?$', '', sys.argv[0])
-    sys.exit(main())
+    sys.exit(
+        load_entry_point('Flask==0.11.1', 'console_scripts', 'flask')()
+    )

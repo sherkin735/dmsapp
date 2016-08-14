@@ -44,26 +44,27 @@
                                     <input class="form-control" placeholder="Name" name="name" type="name" value = "{{ request.form.name }}" >
                                 </div>
                                 <div class="form-group">
-                                    <label for="profile_photo">Upload profile image</label><input class="form-control" name="file" type="file" value = "{{ request.form.file }}">
+                                    <label for="profile_photo">Upload profile image</label><input class="form-control" name="profile_photo" type="file" value = "{{ request.form.profile_photo }}">
                                 </div>
                                 <div class="form-button">
-                                    <input class="btn btn-default" type="submit" value="Register">
+                                    <button class="btn btn-primary" type="submit">Register</button>
                                 </div>
                             </fieldset>
                         </form>
                         </br>
-                        {% if error %}
-                        <p class="error"><strong>Error:</strong> {{ error }}
-                        {% endif %}
-                {% with messages = get_flashed_messages() %}
-                  {% if messages %}
-                    {% for message in messages %}
-                      {{ message }}
-                      Please log in <a href="{{ url_for('login') }}">here.</a>
-                    {% endfor %}
-                  {% endif %}
-                {% endwith %}
-
+                            <div class="form-button">
+                                Already registered? You can log in <a href="{{ url_for('login') }}">here.</a>
+                            </div>
+                        </br>
+                        {% with messages = get_flashed_messages() %}
+                            {% if messages %}
+                                {% for message in messages %}
+                                    <div class="form-button">
+                                    {{ message }}
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        {% endwith %}
                     </div>
                 </div>
             </div>

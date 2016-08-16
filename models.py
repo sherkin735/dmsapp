@@ -12,12 +12,15 @@ class User(Base):
     password = Column(String(20), unique=False)
     name = Column(String(30), unique=False)
     profile_photo = Column(String(80), unique=False)
+    access_level = Column(Integer, unique=False)
 
-    def __init__(self, username=None, password=None, name=None, profile_photo=None):
+    def __init__(self, username=None, password=None, name=None, profile_photo=None, access_level=3):
         self.username = username
         self.password = password
         self.name = name
         self.profile_photo = profile_photo
+        #access level defaults to 3 (intermediate)
+        self.access_level = access_level
 
 
     def __repr__(self):
@@ -37,9 +40,12 @@ class Document(Base):
     document_id = Column(Integer, primary_key=True)
     document_name = Column(String(30), unique=True)
     file_name = Column(String(30), unique=False)
+    file_extension = Column(String(5), unique=False)
     uploader = Column(String(40), unique=False)
     upload_date = Column(DateTime, unique=False)
     version = Column(Float, unique=False)
+    access_level = Column(Integer, unique=False)
+    major_category = Column(String(30), unique=False)
     #hashing algorithm used is MD5 which produces 128 bit hashes - 32 characters in length
     #md5 yields hex digits which are 4 bits as opposed to 8 hence 128/4=32
     hash = Column(String(32), unique=True)
@@ -48,7 +54,7 @@ class Document(Base):
     tags = relationship('Tag', secondary=DocumentTag, backref='Document')
 
     def __init__(self, document_name=None, file_name=None, uploader=None, upload_date=None, version=None, last_edited_by=None,
-    archived=None, hash=None):
+    archived=None, hash=None, file_extension=None, access_level=None, major_category=None):
         self.document_name = document_name
         self.file_name = file_name
         self.uploader = uploader
@@ -57,6 +63,9 @@ class Document(Base):
         self.last_edited_by = last_edited_by
         self.archived = archived
         self.hash = hash
+        self.file_extension = file_extension
+        self.access_level = access_level
+        self.major_category = major_category
 
 
     def increment_version_number(self):
@@ -70,7 +79,7 @@ class Document(Base):
             if archive:
                 shutil.move(locations['old'], locations['new'])
             else:
-                shutil.move(locations['new'], locations['old'])
+                shutil.move(locations['new'], self.DOCUMENT_UPLOAD_FOLDER + '_'.join(self.file_name.split('_')[0:-1])) + self.file_name.split('.')[-1]
             return True
         except Exception, ex:
             print ex

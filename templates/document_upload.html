@@ -1,5 +1,9 @@
 {% extends "base.html" %}
 
+{% block titleblock %}
+    <title>Upload</title>
+{% endblock %}
+
 {%  block mainbody %}
         <!--  page-wrapper -->
         <div id="page-wrapper">
@@ -30,39 +34,59 @@
                         <div class="panel-heading">
                             <i class="fa fa-folder fa-fw"></i>Document Information
                         </div>
-                    <form action="" method="post" role="form" enctype=multipart/form-data>
+                    <form action="" id="document_form" method="post" role="form" enctype=multipart/form-data>
                         <div class="panel-body">
                             <div class="list-group">
-                                <a href="#" class="list-group-item">
-                                    <label for="document_name">Enter a friendly name for your document</label>
-                                    <input class="form-control" placeholder="Document name" name="document_name" type="document_name" autofocus>
-                                </a>
-                                <a href="#" class="list-group-item">
-                                    <label for="js-example-basic-multiple">Add document tags (use the spacebar or commas to complete each tag)</label>
-                                    <select class="js-example-basic-multiple" name="tags" multiple="multiple" style="width:100%;">
-                                    </select>
-                                </a>
-                                </br>
                                 <div class="form-group">
-                                    <label for="document">Upload a new document</label><input class="form-control" name="document" type="file">
+                                    <label for="document_name">Enter a friendly name for your document</label>
+                                    <input class="form-control" placeholder="Document name" name="document_name" type="document_name" required autofocus>
+                                </div>
+                                <div class="form-group">
+                                    <label for="access_level">Select an access level for your document (lower level users will not be able to access it)</label>
+                                    <select class="form-control" name="access_level">
+                                                <option>1</option>
+                                                <option>2</option>
+                                                <option>3</option>
+                                                <option>4</option>
+                                                <option>5</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="js-example-basic-multiple">Add document tags (use the spacebar or commas to complete each tag)</label>
+                                    <select class="js-example-basic-multiple" name="tags" id="tags" multiple="multiple" required style="width:100%;">
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="file">Upload a new document</label><input class="form-control" name="file" select_req type="file">
                                 </div>
                             </div>
                             <!-- /.list-group -->
                             <div class="form-button">
                                     <input class="btn btn-default" type="submit" value="Upload">
                             </div>
-                            {% with messages = get_flashed_messages() %}
+                            {% with messages = get_flashed_messages(with_categories=true) %}
                             {% if messages %}
                                 </br>
                                 <div class="form-button">
-                                {% for message in messages %}
-                                    {{ message }}
+                                {% for category, message in messages %}
+                                    {% if category == 'success' %}
+                                        <div class="alert alert-success">
+                                        {{ message }}
+                                        </div>
+                                    {% else %}
+                                        <div class="alert alert-danger">
+                                        {{ message }}
+                                        </div>
+                                    {% endif %}
                                 {% endfor %}
                                 </div>
                             {% endif %}
                             {% endwith %}
                         </div>
                     </form>
+                    <script>
+                    $("#document_form").validate();
+                    </script>
                     </div>
                     <!--End Notifications-->
                 </div>

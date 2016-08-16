@@ -1,5 +1,9 @@
 {% extends "base.html" %}
 
+{% block titleblock %}
+    <title>Search</title>
+{% endblock %}
+
 {%  block mainbody %}
         <!--  page-wrapper -->
         <div id="page-wrapper">
@@ -59,12 +63,12 @@
                         <div class="panel-heading">
                             <i class="fa fa-folder fa-fw"></i>Document Search Information
                         </div>
-                    <form action="" method="post" role="form" enctype=multipart/form-data>
+                    <form action="" method="post" id="doc_search" role="form" enctype=multipart/form-data>
                         <div class="panel-body">
                             <div class="list-group">
                                 <a href="#" class="list-group-item">
                                     <label for="document_name">Enter the friendly name of your document</label>
-                                    <input class="form-control" placeholder="Document name" name="document_name" type="document_name" autofocus>
+                                    <input class="form-control" placeholder="Document name" name="document_name" required type="document_name" autofocus>
                                 </a>
                                 <a href="#" class="list-group-item">
                                     <label for="js-example-basic-multiple">Enter tags to search by (use the spacebar or commas to complete each tag)</label>
@@ -78,11 +82,14 @@
                             </div>
                         </div>
                     </form>
+                    <script>
+                    $("#doc_search").validate();
+                    </script>
                     </div>
                     <!--End Notifications-->
 
                      <!-- SEARCH RESULTS-->
-                    {% if relevant_docs is not none %}
+                    {% if relevant_docs is not none and relevant_docs != 'empty' %}
                     <div class="panel panel-default">
                         <div class="panel-heading">
                             Search Results
@@ -119,6 +126,10 @@
                             </div>
                         </div>
                     </div>
+                    {% elif not relevant_docs %}
+                        <div class="alert alert-danger">
+                            No results found matching those criteria.
+                        </div>
                     {% endif %}
                     <!--END SEARCH RESULTS-->
                 </div>

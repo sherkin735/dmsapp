@@ -1,5 +1,9 @@
 {% extends "base.html" %}
 
+{% block titleblock %}
+    <title>My Documents</title>
+{% endblock %}
+
 {%  block mainbody %}
         <!--  page-wrapper -->
         <div id="page-wrapper">
@@ -57,14 +61,77 @@
             <div class="row">
                 <div class="col-lg-12">
                      <!-- SEARCH RESULTS-->
-                    {% if user_relevant_docs is not none %}
                     <div class="panel panel-default">
                         <div class="panel-heading">
                             Documents Listing
                         </div>
+
                         <div class="panel-body">
+                            <ul class="nav nav-tabs">
+                                <li class="active"><a href="#uploads" data-toggle="tab">Uploads</a>
+                                </li>
+                                <li><a href="#downloads" data-toggle="tab">Downloads</a>
+                                </li>
+                            </ul>
+
+                            <div class="tab-content">
+                                <div class="tab-pane fade in active" id="uploads">
+                                    <h4>Documents uploaded by you:</h4>
+                                    {% if uploads is not none %}
+                                    <div class="panel-group" id="accordion">
+                                        {% for doc in uploads %}
+                                        <div class="panel panel-default">
+                                            <div class="panel-heading">
+                                                <h4 class="panel-title">
+                                                    <a onclick="ajax_tag_call({{ doc.document_id }})" data-toggle="collapse" data-parent="#accordion" href="#{{ doc.document_id }}">{{ doc.document_name }}</a>
+                                                </h4>
+                                            </div>
+                                            <div id="{{ doc.document_id }}" class="panel-collapse collapse">
+                                                <div class="panel-body">
+                                                    <p>Current version of this document in the database: {{ doc.version }}</p>
+                                                    </br>
+                                                    <form action="" method="post" role="form" enctype=multipart/form-data>
+                                                        <div class="panel-body">
+                                                            <div class="list-group">
+                                                                <a href="#" onClick="return false;" class="list-group-item">
+                                                                      <label for="js-example-basic-multiple">Document tags (Add new tags if required)</label>
+                                                                      <select class="js-example-basic-multiple" name="tags_for_{{ doc.document_id }}" id="tags_for_{{ doc.document_id }}" multiple="multiple" style="width:100%;">
+                                                                      </select>
+                                                                </a>
+                                                                </br>
+                                                                <input type="hidden" name="doc_id" value="{{ doc.document_id }}">
+                                                                <div class="form-group">
+                                                                    <label>Please include a brief summary of your changes</label>
+                                                                    <textarea class="form-control" name="comments" rows="3"></textarea>
+                                                                </div>
+                                                                </br>
+                                                                <div class="form-group">
+                                                                    <label for="document">Upload the updated version of the document</label><input class="form-control" name="document" type="file">
+                                                                </div>
+                                                            </div>
+                                                            <!-- /.list-group -->
+                                                            <div class="form-button">
+                                                                    <input class="btn btn-default" type="submit" value="Upload">
+                                                            </div>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% else %}
+                                        <div class="alert alert-danger">
+                                        You do not have any document uploads to show.
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="tab-pane fade" id="downloads">
+                                    <h4>Documents downloaded by you:</h4>
+                            {% if downloaded_docs is not none %}
                             <div class="panel-group" id="accordion">
-                                {% for doc in user_relevant_docs %}
+                                {% for doc in downloaded_docs %}
                                 <div class="panel panel-default">
                                     <div class="panel-heading">
                                         <h4 class="panel-title">
@@ -76,40 +143,45 @@
                                             <p>Current version of this document in the database: {{ doc.version }}</p>
                                             <p>Version of this document that was checked out: &nbsp;&nbsp; {{ checkouts[doc.document_id] }}</p>
                                             </br>
-
-                    <form action="" method="post" role="form" enctype=multipart/form-data>
-                        <div class="panel-body">
-                            <div class="list-group">
-                                <a href="#" onClick="return false;" class="list-group-item">
-                                      <label for="js-example-basic-multiple">Document tags (Add new tags if required)</label>
-                                      <select class="js-example-basic-multiple" name="tags_for_{{ doc.document_id }}" id="tags_for_{{ doc.document_id }}" multiple="multiple" style="width:100%;">
-                                      </select>
-                                </a>
-                                </br>
-                                <input type="hidden" name="doc_id" value="{{ doc.document_id }}">
-                                <div class="form-group">
-                                    <label>Please include a brief summary of your changes</label>
-                                    <textarea class="form-control" name="comments" rows="3"></textarea>
-                                </div>
-                                </br>
-                                <div class="form-group">
-                                    <label for="document">Upload the updated version of the document</label><input class="form-control" name="document" type="file">
-                                </div>
-                            </div>
-                            <!-- /.list-group -->
-                            <div class="form-button">
-                                    <input class="btn btn-default" type="submit" value="Upload">
-                            </div>
-                        </div>
-                    </form>
+                                            <form action="" method="post" role="form" enctype=multipart/form-data>
+                                                <div class="panel-body">
+                                                    <div class="list-group">
+                                                        <a href="#" onClick="return false;" class="list-group-item">
+                                                              <label for="js-example-basic-multiple">Document tags (Add new tags if required)</label>
+                                                              <select class="js-example-basic-multiple" name="tags_for_{{ doc.document_id }}" id="tags_for_{{ doc.document_id }}" multiple="multiple" style="width:100%;">
+                                                              </select>
+                                                        </a>
+                                                        </br>
+                                                        <input type="hidden" name="doc_id" value="{{ doc.document_id }}">
+                                                        <div class="form-group">
+                                                            <label>Please include a brief summary of your changes</label>
+                                                            <textarea class="form-control" name="comments" rows="3"></textarea>
+                                                        </div>
+                                                        </br>
+                                                        <div class="form-group">
+                                                            <label for="document">Upload the updated version of the document</label><input class="form-control" name="document" type="file">
+                                                        </div>
+                                                    </div>
+                                                    <!-- /.list-group -->
+                                                    <div class="form-button">
+                                                            <input class="btn btn-default" type="submit" value="Upload">
+                                                    </div>
+                                                </div>
+                                            </form>
                                         </div>
                                     </div>
                                 </div>
                                 {% endfor %}
                             </div>
+                            {% else %}
+                                <div class="alert alert-danger">
+                                You do not have any document downloads to show.
+                                </div>
+                            {% endif %}
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    {% endif %}
                     <!--END SEARCH RESULTS-->
                 </div>
             </div>

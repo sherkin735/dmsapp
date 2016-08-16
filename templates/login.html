@@ -33,7 +33,7 @@
                     </div>
                     <div class="panel-body">
 
-                        <form action="" method="post" role="form">
+                        <form action="" method="post" name="login_form" role="form">
                             <fieldset>
                                 <div class="form-group">
                                     <input class="form-control" id="inputSuccess" placeholder="E-mail" name="username" type="text" value="{{ request.form.username }}" autofocus>
@@ -55,12 +55,23 @@
                                 </div>
                             </fieldset>
                         </form>
+                        <script>
+                        $("#login_form").validate();
+                        </script>
                         </br>
                         <div class="form-button">
-                        {% with messages = get_flashed_messages() %}
+                        {% with messages = get_flashed_messages(with_categories=true) %}
                             {% if messages %}
-                                {% for message in messages %}
-                                    {{ message }}
+                                {% for category, message in messages %}
+                                    {% if category == 'error' %}
+                                        <div class="alert alert-danger">
+                                            {{ message }}
+                                        </div>
+                                    {% elif category == 'success' %}
+                                        <div class="alert alert-success">
+                                            {{ message }}
+                                        </div>
+                                    {% endif %}
                                 {% endfor %}
                             {% endif %}
                         {% endwith %}

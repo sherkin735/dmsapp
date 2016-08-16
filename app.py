@@ -4,6 +4,7 @@ from werkzeug.utils import secure_filename
 from models import Document, Checkout, Tag, ChangeLog
 from hashlib import md5
 from datetime import timedelta
+from classifier import Classifier
 
 # Application config options
 # todo: Maybe externalise these options to a config file which also holds DB connection params etc
@@ -26,10 +27,14 @@ def session_expiry():
 
 @app.before_request
 def check_session():
-    if 'username' in session or request.url_rule.rule in app.config['SESSION_CHECKING_ENDPOINT_EXCEPTIONS']:
+    if 'username' in session:
         return None
+    elif request.url_rule:
+        if request.url_rule.rule in app.config['SESSION_CHECKING_ENDPOINT_EXCEPTIONS']:
+            return None
+            print('success')
         print("rendered from here")
-    return render_template('login.html')
+    return redirect(url_for('login'))
 
 
 @app.route("/home")
@@ -48,7 +53,7 @@ def login():
         if check_user_details(request.form.get('username'), request.form.get('password')):
             return redirect(url_for('home'))
         else:
-            flash("Invalid credentials. Please try again.")
+            flash("Invalid credentials. Please try again.", 'error')
     return render_template('login.html')
 
 
@@ -56,7 +61,7 @@ def login():
 def logout():
     if session.get("name"):
         session.clear()
-        flash('Logout successful.')
+        flash('Logout successful.', 'success')
     return redirect(url_for('login'))
 
 
@@ -66,7 +71,7 @@ def check_user_details(username, password):
         if obj.password == password:
             session['username']=obj.username
             session['name']=obj.name
-            session['profile_photo'] = obj.profile_photo
+            session['profile_photo'] = os.path.join(app.config['IMAGE_UPLOAD_FOLDER'], obj.profile_photo)
             return True
     return False
 
@@ -82,16 +87,17 @@ def account_exists(username):
 def register():
     if request.method == 'POST':
         if not request.form.get('username') or not request.form.get('password') or not request.form.get('name'):
-            flash('Not all fields were filled out. Please check you have supplied all requested information.')
+            flash('Not all fields were filled out. Please check you have supplied all requested information.', 'error')
         elif account_exists(request.form.get('username')):
-                flash('An account has already been registered for this email address.')
+                flash('An account has already been registered for this email address. Please try a different address.', 'error')
         else:
-            photo_path = file_upload(request.files.get('profile_photo'), app.config['IMAGE_UPLOAD_FOLDER'], app.config['ALLOWED_IMAGE_EXTENSIONS'])
-            new_user = User(request.form.get('username'), request.form.get('password'), request.form.get('name'), photo_path)
+            file_name = file_upload(request.files.get('profile_photo'), app.config['IMAGE_UPLOAD_FOLDER'], app.config['ALLOWED_IMAGE_EXTENSIONS'])
+            if not file_name:
+                file_name = app.config['DEFAULT_PROFILE_PHOTO']
+            new_user = User(request.form.get('username'), request.form.get('password'), request.form.get('name').title(), file_name)
             db_session.add(new_user)
             db_session.commit()
-            flash('New user created successfully.')
-            # todo: remove error variable from register.html and replace with flashed mesages
+            flash('New user created successfully.', 'success')
     return render_template('register.html')
 
 
@@ -100,7 +106,7 @@ def serve_image(filename):
     return send_from_directory(app.config['IMAGE_UPLOAD_FOLDER'], filename)
 
 
-@app.route('/profile', methods = ['GET', 'POST'])
+@app.route('/profile', methods=['GET', 'POST'])
 def profile():
     if request.method == 'POST':
         current_user = User.query.filter_by(username=session['username']).first()
@@ -128,19 +134,14 @@ def allowed_file(filename, extensions):
 
 
 def file_upload(upload_file, destination_folder, extensions):
-    if not upload_file:
-        upload_file = app.config['DEFAULT_PROFILE_PHOTO']
-        path_to_file = os.path.join(app.config['IMAGE_UPLOAD_FOLDER'], upload_file)
-    elif allowed_file(upload_file.filename, extensions):
-        filename = secure_filename(upload_file.filename)
-        path_to_file = os.path.join(destination_folder, filename)
-        upload_file.save(path_to_file)
-    else:
-        path_to_file = os.path.join(app.config['IMAGE_UPLOAD_FOLDER'], app.config['DEFAULT_PROFILE_PHOTO'])
-    return path_to_file
+    if upload_file and allowed_file(upload_file.filename, extensions):
+            filename = sanitise_filename(upload_file.filename)
+            upload_file.save(os.path.join(destination_folder, filename))
+            return filename
+    return None
 
 
-def remove_file(file, destination_folder):
+def delete_file():
     pass
 
 
@@ -170,30 +171,40 @@ def document_upload():
         saved_tags = Tag.query.filter(Tag.text.in_(tags)).all()
         for tag in saved_tags:
             tags.remove(tag.text)
-        if request.form.get('document_name') and request.form.get('tags') and request.files.get('document'):
-            doc_hash = get_document_hash(request.files['document'])
+        if request.form.get('document_name') and request.form.get('tags') and 'file' in request.files:
+            file = request.files['file']
+            if not file:
+                flash("No file included in upload", "error")
+            doc_hash = get_document_hash(file)
+            file.stream.seek(0)
             doc_name = doc_previously_uploaded(doc_hash)
             if not doc_name:
+                saved_file_name = file_upload(request.files['file'], app.config['DOCUMENT_UPLOAD_FOLDER'], app.config['ALLOWED_DOCUMENT_EXTENSIONS'])
                 todays_date_time = datetime.datetime.today()
-                request.files['document'].filename = sanitise_filename(request.files['document'].filename)
-                result = file_upload(request.files['document'], app.config['DOCUMENT_UPLOAD_FOLDER'], app.config['ALLOWED_DOCUMENT_EXTENSIONS'])
-                document = Document(document_name=request.form['document_name'], file_name=request.files['document'].filename,
+                document_classifier = Classifier(app.config['DOCUMENT_UPLOAD_FOLDER'] + '/' + saved_file_name)
+                predicted_category = document_classifier.classify_document()
+
+                document = Document(document_name=request.form['document_name'], file_name=saved_file_name,
                 uploader=session['username'], upload_date=todays_date_time,
-                version=1.0, last_edited_by=session['username'], archived=False, hash=doc_hash)
+                version=1.0, last_edited_by=session['username'], archived=False, hash=doc_hash,
+                file_extension=saved_file_name.split('.')[-1], access_level=request.form.getlist("access_level")[0], major_category=predicted_category)
                 for tag in tags:
                     document.tags.append(Tag(tag))
-                if result:
+                if saved_file_name:
                     db_session.add(document)
                     db_session.commit()
                     upload_event = ChangeLog(document.document_id, todays_date_time, "Initial upload of document", session['username'], document.document_name)
                     db_session.add(upload_event)
                     db_session.commit()
-                    flash("Document saved successfully")
-                if saved_tags:
+                    flash("Document uploaded successfully", 'success')
+                else:
+                    os.remove(app.config['DOCUMENT_UPLOAD_FOLDER'] + '/' + saved_file_name)
+                    flash("Document upload failed. Please contact an administrator", 'error')
+                if len(saved_tags) > 0:
                     for tag in saved_tags:
                         engine.execute("INSERT INTO DocumentTag (tag_id, document_id) VALUES ({0}, {1})".format(tag.tag_id, document.document_id))
             else:
-                flash("This document has been uploaded previously. Please search for the following document: {0}".format(doc_name))
+                flash("This document has been uploaded previously. Please search for the following document: {0}".format(doc_name), 'error')
         else:
             flash("Not all required fields were filled out. Please ensure all fields have been filled and try again")
     return render_template('document_upload.html')
@@ -203,7 +214,9 @@ def document_upload():
 def document_search():
     tagged_documents = []
     named_documents = []
-    if request.method == 'POST':
+    if request.method=='GET':
+        return render_template('document_search.html', relevant_docs='empty')
+    elif request.method == 'POST':
         doc_name = request.form.get('document_name')
         tags = request.form.getlist('document_tags')
         if doc_name:
@@ -224,15 +237,19 @@ def document_search():
         all_docs = [doc for doc in all_docs if doc != []]
     return render_template("document_search.html", relevant_docs=all_docs)
 
+
 def checkout_document(document_id, version):
     try:
-        previous_checkout = Checkout.query.filter(Checkout.checkout_username==session['username']).filter(Checkout.document_id== document_id).first()
+        checkout_date_time = datetime.datetime.today()
+        previous_checkout = Checkout.query.filter(Checkout.checkout_username == session['username']).filter(Checkout.document_id == document_id).first()
         if not previous_checkout:
-            checkout_date_time = datetime.datetime.today()
             chkout = Checkout(document_id, checkout_date_time, session['username'], version)
             db_session.add(chkout)
-            db_session.commit()
-            return True
+        else:
+            previous_checkout.checkout_date_time = checkout_date_time
+            previous_checkout.version = version
+        db_session.commit()
+        return True
     except Exception, ex:
         print(ex)
     return False
@@ -297,17 +314,21 @@ def my_documents():
     #todo: version numbers increment even upon failed updates. bundle all activities together
     if request.method == 'POST':
         checkin_document()
-    checked_documents = Checkout.query.filter(Checkout.checkout_username == session['username']).all()
-    doc_ids = []
-    for doc in checked_documents:
-        doc_ids.append(doc.document_id)
+        #get all my checkouts
+    all_checkouts = Checkout.query.filter(Checkout.checkout_username == session['username']).all()
+    doc_ids = [doc.document_id for doc in all_checkouts]
     #fix here so _in clauses cannot run on empty sequences
-    all_docs = Document.query.filter(Document.document_id.in_(doc_ids)).all()
-    all_checkouts = Checkout.query.filter(Checkout.document_id.in_(doc_ids)).all()
+    downloads = Document.query.filter(Document.document_id.in_(doc_ids)).all()
+    uploads = Document.query.filter(Document.uploader == session['username']).all()
+    downloads = [doc for doc in downloads if doc not in uploads]
     checkout_version_dict = {}
-    for document in all_checkouts:
-        checkout_version_dict[document.document_id] = document.document_version
-    return render_template("my_documents.html", user_relevant_docs=all_docs, checkouts=checkout_version_dict)
+    for checkout in all_checkouts:
+        checkout_version_dict[checkout.document_id] = checkout.document_version
+    if len(downloads) == 0:
+        downloads = None
+    if len(uploads) == 0:
+        uploads = None
+    return render_template("my_documents.html", downloaded_docs=downloads, checkouts=checkout_version_dict, uploads=uploads)
 
 
 @app.route("/document-timeline/<document_id>", methods=['GET', 'POST'])
@@ -322,6 +343,8 @@ def shutdown_session(exception=None):
     db_session.remove()
 
 
+#some issues with the timeline page where it wouldnt serve the profile image
+#added this as a temporary workaround
 @app.route('/document-timeline/profile_images/<filename>')
 def uploaded_file(filename):
     return send_from_directory(app.config['IMAGE_UPLOAD_FOLDER'],

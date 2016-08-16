@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
+    <title>Register</title>
     <!-- Core CSS - Include with every page -->
     <!-- DMS Logo font -->
     <link href='https://fonts.googleapis.com/css?family=Lobster' rel='stylesheet' type='text/css'>
@@ -51,16 +51,24 @@
                                 </div>
                             </fieldset>
                         </form>
+
                         </br>
                             <div class="form-button">
                                 Already registered? You can log in <a href="{{ url_for('login') }}">here.</a>
                             </div>
                         </br>
-                        {% with messages = get_flashed_messages() %}
+                        {% with messages = get_flashed_messages(with_categories=true) %}
                             {% if messages %}
-                                {% for message in messages %}
-                                    <div class="form-button">
-                                    {{ message }}
+                                {% for category, message in messages %}
+                                    {% if category == 'success' %}
+                                        <div class="alert alert-success">
+                                    {% else %}
+                                        <div class="alert alert-danger">
+                                    {% endif %}
+                                        <div class="form-button">
+                                        {{ message }}
+                                        </div>
+                                    </div>
                                     </div>
                                 {% endfor %}
                             {% endif %}

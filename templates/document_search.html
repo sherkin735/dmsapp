@@ -68,7 +68,7 @@
                             <div class="list-group">
                                 <a href="#" class="list-group-item">
                                     <label for="document_name">Enter the friendly name of your document</label>
-                                    <input class="form-control" placeholder="Document name" name="document_name" required type="document_name" autofocus>
+                                    <input class="form-control" placeholder="Document name" name="document_name" type="document_name" autofocus>
                                 </a>
                                 <a href="#" class="list-group-item">
                                     <label for="js-example-basic-multiple">Enter tags to search by (use the spacebar or commas to complete each tag)</label>
@@ -82,9 +82,6 @@
                             </div>
                         </div>
                     </form>
-                    <script>
-                    $("#doc_search").validate();
-                    </script>
                     </div>
                     <!--End Notifications-->
 
@@ -158,3 +155,7 @@
         <a href="/document-timeline"><i class="fa fa-sitemap fa-fw"></i>Document Timeline</a>
     </li>
 {%  endblock %}
+
+<script>
+    $("#doc_search").validate();
+</script>

@@ -3,7 +3,21 @@ __author__ = 'william'
 from sqlalchemy import Column, Integer, String, Boolean, Float, DateTime, ForeignKey, Table
 from database import Base
 from sqlalchemy.orm import relationship
+from sqlalchemy.orm.session import object_session
 import shutil
+
+
+DocumentUser = Table("DocumentUser",
+                    Base.metadata,
+                    Column("user_id", Integer, ForeignKey("User.user_id"), primary_key=True),
+                    Column("document_id", Integer, ForeignKey("Document.document_id"), primary_key=True))
+
+
+DocumentTag = Table("DocumentTag",
+                    Base.metadata,
+                    Column("tag_id", Integer, ForeignKey("Tag.tag_id"), primary_key=True),
+                    Column("document_id", Integer, ForeignKey("Document.document_id"), primary_key=True))
+
 
 class User(Base):
     __tablename__ = "User"
@@ -13,23 +27,35 @@ class User(Base):
     name = Column(String(30), unique=False)
     profile_photo = Column(String(80), unique=False)
     access_level = Column(Integer, unique=False)
+    password_try_count = Column(Integer, unique=False)
+    user_access_exceptions = relationship('Document', secondary=DocumentUser, backref='User')
 
-    def __init__(self, username=None, password=None, name=None, profile_photo=None, access_level=3):
+    def __init__(self, username=None, password=None, name=None, profile_photo=None, access_level=3, password_try_count=0):
         self.username = username
         self.password = password
         self.name = name
         self.profile_photo = profile_photo
         #access level defaults to 3 (intermediate)
         self.access_level = access_level
-
+        self.password_try_count = password_try_count
 
     def __repr__(self):
         return '<User %r' % (self.username)
 
-DocumentTag = Table("DocumentTag",
-                    Base.metadata,
-                    Column("tag_id", Integer, ForeignKey("Tag.tag_id"), primary_key=True),
-                    Column("document_id", Integer, ForeignKey("Document.document_id"), primary_key=True))
+    def to_dict(self):
+        return {'user_id': self.user_id,
+                'username': self.username,
+                'name': self.name,
+                'access_level': self.access_level,
+                'password_try_count': self.password_try_count,
+                'password': self.password
+                }
+
+    def to_ajax_dict(self):
+        return {'id': self.user_id,
+                'text': self.username
+                }
+
 
 class Document(Base):
 
@@ -51,6 +77,7 @@ class Document(Base):
     hash = Column(String(32), unique=True)
     last_edited_by = Column(String(40), unique=False)
     archived = Column(Boolean, unique=False)
+    user_access_exceptions = relationship('User', secondary=DocumentUser, backref='Document')
     tags = relationship('Tag', secondary=DocumentTag, backref='Document')
 
     def __init__(self, document_name=None, file_name=None, uploader=None, upload_date=None, version=None, last_edited_by=None,
@@ -90,6 +117,7 @@ class Document(Base):
         return '<Document %r' % (self.document_name)
 
 
+
 class Tag(Base):
     __tablename__ = "Tag"
     tag_id = Column(Integer, primary_key=True)
@@ -101,6 +129,10 @@ class Tag(Base):
 
     def __repr__(self):
         return '<Tag %r' % (self.text)
+
+    def to_dict(self):
+        return {'id': self.tag_id,
+                'text': self.text}
 
 class Checkout(Base):
     __tablename__ = "Checkout"
@@ -122,7 +154,6 @@ class Checkout(Base):
 
 class ChangeLog(Base):
     __tablename__ = "ChangeLog"
-    #todo add fields for username and filename and friendly name
     changelog_id = Column(Integer, primary_key=True)
     document_id = Column(Integer, ForeignKey("Document.document_id"), nullable=False)
     change_username = Column(String(40), unique=False)

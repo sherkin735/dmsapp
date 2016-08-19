@@ -21,161 +21,41 @@
                 <div class="col-lg-12">
                     <div class="alert alert-info">
                         <i class="fa fa-folder-open"></i>&nbsp;Welcome Back <b>{{ session['name'] }}</b>
- <i class="fa  fa-pencil"></i><b>&nbsp;2,000 </b>Support Tickets Pending to Answer.
+                        <i class="fa  fa-pencil"></i><b>&nbsp;2,000 </b>Support Tickets Pending to Answer.
                     </div>
                 </div>
                 <!--end  Welcome -->
             </div>
 
-
             <div class="row">
-                <!--quick info section -->
-                <div class="col-lg-3">
-                    <div class="alert alert-danger text-center">
-                        <i class="fa fa-calendar fa-3x"></i>&nbsp;<b>20 </b>Meetings Sheduled This Month
+            <div class="col-lg-12">
+            <div class="panel panel-default">
+                        <div class="panel-heading">
+                             Users
+                        </div>
+                        <div class="panel-body">
+                            <div class="table-responsive">
+                               <table id="example" class="display" cellspacing="0" width="100%">
+                                <thead>
+                                    <tr>
+                                        <th></th>
+                                        <th>UserID</th>
+                                        <th>Password try count</th>
+                                        <th>Username</th>
+                                        <th>Name</th>
+                                        <th>Access Level</th>
+                                    </tr>
+                                </thead>
+                               </table>
+                            </div>
+                         </div>
 
-                    </div>
-                </div>
-                <div class="col-lg-3">
-                    <div class="alert alert-success text-center">
-                        <i class="fa  fa-beer fa-3x"></i>&nbsp;<b>27 % </b>Profit Recorded in This Month
-                    </div>
-                </div>
-                <div class="col-lg-3">
-                    <div class="alert alert-info text-center">
-                        <i class="fa fa-rss fa-3x"></i>&nbsp;<b>1,900</b> New Subscribers This Year
-
-                    </div>
-                </div>
-                <div class="col-lg-3">
-                    <div class="alert alert-warning text-center">
-                        <i class="fa  fa-pencil fa-3x"></i>&nbsp;<b>2,000 $ </b>Payment Dues For Rejected Items
-                    </div>
-                </div>
-                <!--end quick info section -->
+            </div>
+            </div>
             </div>
 
+
             <div class="row">
-                <div class="col-lg-8">
-
-
-
-                    <!--Area chart example -->
-                    <div class="panel panel-primary">
-                        <div class="panel-heading">
-                            <i class="fa fa-bar-chart-o fa-fw"></i>Area Chart Example
-                            <div class="pull-right">
-                                <div class="btn-group">
-                                    <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown">
-                                        Actions
-                                        <span class="caret"></span>
-                                    </button>
-                                    <ul class="dropdown-menu pull-right" role="menu">
-                                        <li><a href="#">Action</a>
-                                        </li>
-                                        <li><a href="#">Another action</a>
-                                        </li>
-                                        <li><a href="#">Something else here</a>
-                                        </li>
-                                        <li class="divider"></li>
-                                        <li><a href="#">Separated link</a>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="panel-body">
-                            <div id="morris-area-chart"></div>
-                        </div>
-
-                    </div>
-                    <!--End area chart example -->
-                    <!--Simple table example -->
-                    <div class="panel panel-primary">
-                        <div class="panel-heading">
-                            <i class="fa fa-bar-chart-o fa-fw"></i>Simple Table Example
-                            <div class="pull-right">
-                                <div class="btn-group">
-                                    <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown">
-                                        Actions
-                                        <span class="caret"></span>
-                                    </button>
-                                    <ul class="dropdown-menu pull-right" role="menu">
-                                        <li><a href="#">Action</a>
-                                        </li>
-                                        <li><a href="#">Another action</a>
-                                        </li>
-                                        <li><a href="#">Something else here</a>
-                                        </li>
-                                        <li class="divider"></li>
-                                        <li><a href="#">Separated link</a>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="panel-body">
-                            <div class="row">
-                                <div class="col-lg-12">
-                                    <div class="table-responsive">
-                                        <table class="table table-bordered table-hover table-striped">
-                                            <thead>
-                                                <tr>
-                                                    <th>#</th>
-                                                    <th>Date</th>
-                                                    <th>Time</th>
-                                                    <th>Amount</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <tr>
-                                                    <td>3326</td>
-                                                    <td>10/21/2013</td>
-                                                    <td>3:29 PM</td>
-                                                    <td>$321.33</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>3325</td>
-                                                    <td>10/21/2013</td>
-                                                    <td>3:20 PM</td>
-                                                    <td>$234.34</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>3324</td>
-                                                    <td>10/21/2013</td>
-                                                    <td>3:03 PM</td>
-                                                    <td>$724.17</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>3323</td>
-                                                    <td>10/21/2013</td>
-                                                    <td>3:00 PM</td>
-                                                    <td>$23.71</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>3322</td>
-                                                    <td>10/21/2013</td>
-                                                    <td>2:49 PM</td>
-                                                    <td>$8345.23</td>
-                                                </tr>
-
-
-                                            </tbody>
-                                        </table>
-                                    </div>
-
-                                </div>
-
-                            </div>
-                            <!-- /.row -->
-                        </div>
-                        <!-- /.panel-body -->
-                    </div>
-                    <!--End simple table example -->
-
-                </div>
 
                 <div class="col-lg-4">
                     <div class="panel panel-primary text-center no-boder">
@@ -446,4 +326,90 @@
     <li>
         <a href="/document-timeline"><i class="fa fa-sitemap fa-fw"></i>Document Timeline</a>
     </li>
+
 {%  endblock %}
+
+{% block customjs %}
+<!-- DATA TABLES-->
+
+    <script type="text/javascript" charset="utf8" src="https://code.jquery.com/jquery-1.12.3.js"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.12/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/1.2.1/js/dataTables.buttons.min.js"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/select/1.2.0/js/dataTables.select.min.js"></script>
+    <script src="../static/plugins/Editor-1.5.6/js/dataTables.editor.min.js"></script>
+    <script src="../static/plugins/bootstrap/bootstrap.min.js"></script>
+    <script src="../static/plugins/metisMenu/jquery.metisMenu.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.12/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/1.2.1/css/buttons.dataTables.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/select/1.2.0/css/select.dataTables.min.css">
+    <link rel="stylesheet" type="text/css" href="../static/plugins/Editor-1.5.6/css/editor.dataTables.min.css">
+
+    <script>
+    $(document).ready( function () {
+        table_setup('user');
+    })
+
+    function table_setup(table_name){
+
+    var defaults = {
+            data: null,
+            defaultContent: '',
+            className: 'select-checkbox',
+            orderable: false
+        };
+
+    if (table_name == 'user'){
+        var id_field = 'user_id';
+
+        var fieldnames = [
+        { label: 'UserID', name: 'user_id' },
+        { label: 'Password Attempts', name: 'password_try_count'},
+        { label: 'Username',  name: 'username'  },
+        { label: 'Name',  name: 'name'  },
+        { label: 'Access Level',  name: 'access_level'  }
+        ];
+
+        var column_data = [
+                    defaults,
+        { data: 'user_id' },
+        { data: 'password_try_count'},
+        { data: 'username' },
+        { data: 'name' },
+        { data: 'access_level' }
+    ];
+    }
+
+    var editor = new $.fn.dataTable.Editor( {
+    ajax:  '/admin_user_table',
+    table: '#example',
+    idSrc:  id_field,
+    fields: fieldnames
+    } );
+
+    var table = $('#example').DataTable( {
+    ajax: '/admin_user_table',
+    dom: 'Bfrtip',
+    columns: column_data,
+    select: {
+            style:    'os',
+            selector: 'td:first-child'
+        },
+    buttons: [
+        { extend: 'create', editor: editor },
+        { extend: 'edit',   editor: editor },
+        { extend: 'remove', editor: editor }
+    ]
+    } );
+
+    table.buttons().container()
+        .insertBefore( '#example_filter' );
+
+    // Activate an inline edit on click of a table cell
+    $('#example').on( 'click', 'tbody td:not(:first-child)', function (e) {
+        editor.inline( this );
+    } );
+    }
+
+    </script>
+{% endblock %}

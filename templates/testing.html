@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+<table id="example" class="display" cellspacing="0" width="100%">
+                                <thead>
+                                    <tr>
+                                        <th></th>
+                                        <th>First name</th>
+                                        <th>Last name</th>
+                                        <th>Position</th>
+                                        <th>Office</th>
+                                        <th width="18%">Start date</th>
+                                        <th>Salary</th>
+                                    </tr>
+                                </thead>
+                               </table>
+</body>
+
+<!-- Core Scripts - Include with every page -->
+    <script src="../static/plugins/jquery-1.10.2.js"></script>
+    <script src="../static/plugins/bootstrap/bootstrap.min.js"></script>
+    <script src="../static/plugins/metisMenu/jquery.metisMenu.js"></script>
+    <script src="../static/plugins/pace/pace.js"></script>
+    <script src="../static/scripts/siminta.js"></script>
+    <script src="../static/scripts/siminta.js"></script>
+    <!-- Page-Level Plugin Scripts-->
+    <script src="../static/plugins/morris/raphael-2.1.0.min.js"></script>
+    <script src="../static/plugins/morris/morris.js"></script>
+        <!-- SELECT 2 - USED FOR TAGGING BOXES -->
+    <link href="../static/plugins/select2/css/select2.min.css" rel="stylesheet" />
+    <script src="../static/plugins/select2/js/select2.min.js"></script>
+
+<!-- DATA TABLES-->
+    <link rel="stylesheet" type="text/css" href="//cdn.datatables.net/1.10.12/css/jquery.dataTables.css">
+    <link rel="stylesheet" type="text/css" href="../static/plugins/Editor-1.5.6/css/editor.dataTables.css">
+
+    <script type="text/javascript" charset="utf8" src="//cdn.datatables.net/1.10.12/js/jquery.dataTables.js"></script>
+    <script src="../static/plugins/Editor-1.5.6/js/dataTables.editor.js"></script>
+
+    <script>
+
+
+    $(document).ready( function () {
+
+    var editor = new $.fn.dataTable.Editor( {
+    ajax:  '/admin_user_table',
+    table: '#example',
+    fields: [
+        { label: 'First name', name: 'first_name' },
+        { label: 'Last name',  name: 'last_name'  }
+        ]
+    } );
+
+    $('#example').DataTable( {
+    ajax: '/admin_user_table',
+    dom: 'Bfrtip',
+    columns: [
+        { data: 'first_name' },
+        { data: 'last_name' }
+    ],
+    select: true,
+    buttons: [
+        { extend: 'create', editor: editor },
+        { extend: 'edit',   editor: editor },
+        { extend: 'remove', editor: editor }
+    ]
+    } );})
+        console.log("table setup complete")
+    </script>
+
+</html>

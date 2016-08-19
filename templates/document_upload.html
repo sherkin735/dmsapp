@@ -52,6 +52,11 @@
                                     </select>
                                 </div>
                                 <div class="form-group">
+                                    <label for="js-example-basic-multiple">Select lower level users who can access the document (If required)</label>
+                                    <select class="js-example-basic-users" name="user_exceptions" id="user_exceptions" multiple="multiple" required style="width:100%;">
+                                    </select>
+                                </div>
+                                <div class="form-group">
                                     <label for="js-example-basic-multiple">Add document tags (use the spacebar or commas to complete each tag)</label>
                                     <select class="js-example-basic-multiple" name="tags" id="tags" multiple="multiple" required style="width:100%;">
                                     </select>
@@ -84,9 +89,7 @@
                             {% endwith %}
                         </div>
                     </form>
-                    <script>
-                    $("#document_form").validate();
-                    </script>
+
                     </div>
                     <!--End Notifications-->
                 </div>
@@ -115,3 +118,90 @@
         <a href="/document-timeline"><i class="fa fa-sitemap fa-fw"></i>Document Timeline</a>
     </li>
 {%  endblock %}
+
+{% block customjs %}
+    <script src="../static/plugins/jquery-1.10.2.js"></script>
+    <script src="../static/plugins/bootstrap/bootstrap.min.js"></script>
+    <script src="../static/plugins/metisMenu/jquery.metisMenu.js"></script>
+    <script src="../static/plugins/pace/pace.js"></script>
+    <script src="../static/scripts/siminta.js"></script>
+    <!-- Page-Level Plugin Scripts-->
+    <script src="../static/plugins/morris/raphael-2.1.0.min.js"></script>
+    <script src="../static/plugins/morris/morris.js"></script>
+    <!-- <script src="../static/scripts/dashboard-demo.js"></script>-->
+    <!-- SELECT 2 - USED FOR TAGGING BOXES -->
+    <link href="../static/plugins/select2/css/select2.min.css" rel="stylesheet" />
+    <script src="../static/plugins/select2/js/select2.full.js"></script>
+    <script type="text/javascript">
+      //TAGGING AJAX
+      $(".js-example-basic-multiple").select2({
+          tags: true,
+          minimumInputLength: 2,
+          ajax: {
+                url: "/ajax_doc_tags",
+                dataType: 'json',
+                delay: 250,
+                data: function (params) {
+                  return {
+                    search: params.term, // search term
+                    page: params.page
+                  };
+                },
+                processResults: function (data, params) {
+                  // parse the results into the format expected by Select2
+                  // since we are using custom formatting functions we do not need to
+                  // alter the remote JSON data, except to indicate that infinite
+                  // scrolling can be used
+                  console.log(data.items);
+                  params.page = params.page || 1;
+
+                  return {
+                    results: data.items,
+                    pagination: {
+                      more: (params.page * 30) < data.total_count
+                    }
+                  };
+                },
+                cache: true
+              }
+      });
+      //TAGGING
+
+     //USERS AJAX
+     $(".js-example-basic-users").select2({
+          tags: true,
+          minimumInputLength: 2,
+          ajax: {
+                url: "/ajax_user_names",
+                dataType: 'json',
+                delay: 250,
+                data: function (params) {
+                  return {
+                    search: params.term, // search term
+                    page: params.page
+                  };
+                },
+                processResults: function (data, params) {
+                  // parse the results into the format expected by Select2
+                  // since we are using custom formatting functions we do not need to
+                  // alter the remote JSON data, except to indicate that infinite
+                  // scrolling can be used
+                  console.log(data.items);
+                  params.page = params.page || 1;
+
+                  return {
+                    results: data.items,
+                    pagination: {
+                      more: (params.page * 30) < data.total_count
+                    }
+                  };
+                },
+                cache: true
+              }
+      });
+    </script>
+{% endblock %}
+
+<script>
+$("#document_form").validate();
+</script>

@@ -6,7 +6,7 @@ DOCUMENT_ARCHIVE_FOLDER = '/Users/william/Desktop/dmsapp/documents/old_versions'
 
 RESTRICTED_CHARACTERS = ['[', ']', '{', '}']
 
-SECRET_KEY = '\xa4\xcaG \x8f\x1c\x94i\xd8P$9\x11\x8b,\xbdV\x9f\xc5\xf3\x1cL\xcev'
+SECRET_KEY =
 
 DEFAULT_PROFILE_PHOTO = 'default.png'
 ALLOWED_IMAGE_EXTENSIONS = set(['png', 'jpg', 'jpeg', 'gif'])

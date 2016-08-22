@@ -11,8 +11,14 @@ from pdfminer.converter import TextConverter
 from pdfminer.layout import LAParams
 from pdfminer.pdfpage import PDFPage
 from cStringIO import StringIO
+import sys
 
-CATEGORIES = os.listdir('./20news-bydate/20news-bydate-train')
+if sys.platform == 'darwin':
+    root = './'
+else:
+    root = '/var/www/dmsapp'
+
+CATEGORIES = os.listdir(os.path.join(root, '20news-bydate/20news-bydate-train'))
 
 class Classifier(object):
 

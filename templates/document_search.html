@@ -66,15 +66,15 @@
                     <form action="" method="post" id="doc_search" role="form" enctype=multipart/form-data>
                         <div class="panel-body">
                             <div class="list-group">
-                                <a href="#" class="list-group-item">
+                                <div class="form-group">
                                     <label for="document_name">Enter the friendly name of your document</label>
                                     <input class="form-control" placeholder="Document name" name="document_name" type="document_name" autofocus>
-                                </a>
-                                <a href="#" class="list-group-item">
+                                </div>
+                                <div class="form-group">
                                     <label for="js-example-basic-multiple">Enter tags to search by (use the spacebar or commas to complete each tag)</label>
                                     <select class="js-example-basic-multiple" name="document_tags" multiple="multiple" style="width:100%;">
                                     </select>
-                                </a>
+                                </div>
                             </div>
                             <!-- /.list-group -->
                             <div class="form-button">
@@ -98,10 +98,10 @@
                                     <div class="panel-heading">
                                         <h4 class="panel-title">
                                             <!--    Sort of a lazy load here - populate the tags field when a user clicks to expand a document -->
-                                            <a onclick="ajax_tag_call({{ doc.document_id }})" data-toggle="collapse" data-parent="#accordion" href="#{{ doc.document_id }}">{{ doc.document_name }}</a>
+                                            <a onclick="ajax_tag_call({{ doc.id }})" data-toggle="collapse" data-parent="#accordion" href="#{{ doc.id }}">{{ doc.document_name }}</a>
                                         </h4>
                                     </div>
-                                    <div id="{{ doc.document_id }}" class="panel-collapse collapse">
+                                    <div id="{{ doc.id }}" class="panel-collapse collapse">
                                         <div class="panel-body">
                                             <p><b>Uploader:</b> {{ doc.uploader }}</p>
                                             <p><b>Last modified by:</b> {{ doc.last_edited_by }}</p>
@@ -113,9 +113,9 @@
                                                 </select>
                                             </a>
                                             </br>
-                                            <a href="/downloads/{{ doc.document_id }}" class="btn btn-success">Download</a>
+                                            <a href="/downloads/{{ doc.id }}" class="btn btn-success">Download</a>
                                             &nbsp;
-                                            <a href="/document-timeline/{{ doc.document_id }}" class="btn btn-success">Show edit history</a>
+                                            <a href="/document-timeline/{{ doc.id }}" class="btn btn-success">Show edit history</a>
                                         </div>
                                     </div>
                                 </div>

@@ -37,16 +37,18 @@
                     <form action="" method="post" role="form" enctype=multipart/form-data>
                         <div class="panel-body">
                             <div class="list-group">
-                                <a href="#" class="list-group-item">
-                                    <input class="form-control" placeholder="E-mail" name="username" type="username" value="{{ session.username }}" autofocus>
-                                </a>
-                                <a href="#" class="list-group-item">
+                                <div class="form-group">
+                                    <label>Username (E-mail address)</label>
+                                    <input class="form-control" placeholder="E-mail" id="username" name="username" type="username" value="{{ session.username }}" autofocus>
+                                </div>
+                                <div class="form-group">
+                                    <label>Password</label>
                                     <input class="form-control" placeholder="Password" name="password" type="password" >
-                                </a>
-                                <a href="#" class="list-group-item">
+                                </div>
+                                <div class="form-group">
+                                    <label>Name</label>
                                     <input class="form-control" placeholder="Name" name="name" type="name" value="{{ session.name }}" >
-                                </a>
-                                </br>
+                                </div>
                                 <div class="form-group">
                                     <label for="profile_photo">Upload new profile image</label><input class="form-control" name="profile_photo" type="file">
                                 </div>
@@ -55,6 +57,24 @@
                             <div class="form-button">
                                     <input class="btn btn-default" type="submit" value="Save changes">
                             </div>
+                            {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                </br>
+                                <div class="form-button">
+                                {% for category, message in messages %}
+                                    {% if category == 'success' %}
+                                        <div class="alert alert-success">
+                                        {{ message }}
+                                        </div>
+                                    {% else %}
+                                        <div class="alert alert-danger">
+                                        {{ message }}
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                                </div>
+                            {% endif %}
+                            {% endwith %}
                         </div>
                     </form>
                     </div>

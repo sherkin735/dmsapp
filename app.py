@@ -4,8 +4,12 @@ from werkzeug.utils import secure_filename
 from models import Document, Checkout, Tag, ChangeLog
 from hashlib import md5
 from datetime import timedelta
-from classifier import Classifier
+from Classifier import Classifier
 from sqlalchemy import exc
+from sqlalchemy.sql import func
+import json
+from random import randint
+from operator import itemgetter
 
 from database import db_session, engine
 from models import User
@@ -36,6 +40,8 @@ def check_session():
 
 @app.route("/home")
 def home():
+    if session['access_level'] == 1:
+        return redirect(url_for('admin'))
     return render_template("index.html")
 
 
@@ -46,6 +52,81 @@ def admin():
     if users:
         user_count = len(users)
     return render_template("admin.html", locked_out_users=user_count)
+
+
+def populate_data():
+    for i in range(1, 10):
+        num_records = randint(2, 10)
+        for num in range(1, num_records):
+            date = datetime.datetime.today() - datetime.timedelta(days=i)
+            #checkout = Checkout(document_id=1, checkout_time=date, checkout_username='sherkin', document_version='1.0')
+            #doc = Document(document_name="Name{0}{1}".format(num, date), file_name="{0}-{1}".format(num, date), uploader='william', upload_date=date, version='1.0', last_edited_by='william', archived=False,hash="{0}-{1}".format(num, date), file_extension='pdf', access_level=3, major_category='pending')
+            user = User("{0}-{1}".format(date, num),'password', 'name', 'photo', 3, 0, date)
+            db_session.add(user)
+            db_session.commit()
+
+
+def collate_download_stats():
+    twenty_days_ago = datetime.datetime.today() - datetime.timedelta(days=20)
+    recent_checkouts = Checkout.query.filter(Checkout.checkout_time >= twenty_days_ago).all()
+    checkout_stats = {}
+    for checkout in recent_checkouts:
+        date = checkout.checkout_time.strftime("%d-%m-%Y")
+        if date in checkout_stats:
+            checkout_stats[date] += 1
+        else:
+            checkout_stats[date] = 1
+    return checkout_stats
+
+
+def collate_upload_stats():
+    twenty_days_ago = datetime.datetime.today() - datetime.timedelta(days=20)
+    recent_uploads = Document.query.filter(Document.upload_date >= twenty_days_ago).all()
+    upload_stats = {}
+    for upload in recent_uploads:
+        date = upload.upload_date.strftime("%d-%m-%Y")
+        if date in upload_stats:
+            upload_stats[date] += 1
+        else:
+            upload_stats[date] = 1
+    return upload_stats
+
+
+def collate_user_stats():
+    twenty_days_ago = datetime.datetime.today() - datetime.timedelta(days=20)
+    new_users = User.query.filter(User.creation_date >= twenty_days_ago).all()
+    user_stats = {}
+    user_list = []
+    for user in new_users:
+        date = user.creation_date.strftime("%d-%m-%Y")
+        if date in user_stats:
+            user_stats[date] += 1
+        else:
+            user_stats[date] = 1
+    for date in user_stats.keys():
+        user_list.append({'date': date,
+                          'count': user_stats[date]})
+    return sorted(user_list, key=itemgetter('date'))
+
+
+def combine_stats(uploads, downloads):
+    result_list = []
+    for key in uploads.keys():
+        result_list.append({'date': key,
+                            'uploads': uploads[key],
+                            'downloads': downloads[key]})
+    return sorted(result_list, key=itemgetter('date'))
+
+
+@app.route('/admin_stats')
+def admin_stats():
+    #populate_data()
+    checkout_list = collate_download_stats()
+    upload_list = collate_upload_stats()
+    user_stats = collate_user_stats()
+    result = combine_stats(upload_list, checkout_list)
+    return jsonify({'admin_stats': result,
+                   'user_stats': user_stats})
 
 
 @app.route("/")
@@ -80,6 +161,12 @@ def logout():
     return redirect(url_for('login'))
 
 
+def set_session(user):
+    session['username']=user.username
+    session['name']=user.name
+    session['profile_photo'] = os.path.join(app.config['IMAGE_UPLOAD_FOLDER'], user.profile_photo)
+    session['access_level'] = user.access_level
+
 def check_user_details(username, password):
     result = 'invalid'
     try:
@@ -90,10 +177,7 @@ def check_user_details(username, password):
     if obj:
         if obj.password == password and obj.password_try_count < 3:
             obj.password_try_count = 0
-            session['username']=obj.username
-            session['name']=obj.name
-            session['profile_photo'] = os.path.join(app.config['IMAGE_UPLOAD_FOLDER'], obj.profile_photo)
-            session['access_level'] = obj.access_level
+            set_session(obj)
             result = 'valid'
         elif obj.password != password and obj.password_try_count < 2:
             obj.password_try_count += 1
@@ -125,7 +209,9 @@ def register():
             file_name = file_upload(request.files.get('profile_photo'), app.config['IMAGE_UPLOAD_FOLDER'], app.config['ALLOWED_IMAGE_EXTENSIONS'])
             if not file_name:
                 file_name = app.config['DEFAULT_PROFILE_PHOTO']
-            new_user = User(request.form.get('username'), request.form.get('password'), request.form.get('name').title(), file_name)
+            todays_date_time = datetime.datetime.today()
+            new_user = User(username=request.form.get('username'), password=request.form.get('password'), name=request.form.get('name').title(),
+                            profile_photo=file_name, creation_date=todays_date_time)
             db_session.add(new_user)
             db_session.commit()
             flash('New user created successfully.', 'success')
@@ -140,21 +226,37 @@ def serve_image(filename):
 @app.route('/profile', methods=['GET', 'POST'])
 def profile():
     if request.method == 'POST':
-        current_user = User.query.filter_by(username=session['username']).first()
-        if session['username'] != request.form['username'] and account_exists(request.form['username']):
-            flash("An account already exists for this username")
-        elif request.form['username'] != "":
-            current_user.username = request.form['username']
-        if current_user.name != request.form['name'] and request.form['name'] != "":
-            current_user.name = request.form['name']
-        if request.form['password'] != "" and current_user.password != request.form.password:
-            current_user.password = request.form['password']
-        new_photo = session['profile_photo']
-        db_session.commit()
-        session['name'] = request.form['name']
-        session['username'] = request.form['username']
-        #session['profile_photo'] = request.profile_photo
-        flash("User details were successfully updated.")
+        try:
+            no_change = True
+            current_user = User.query.filter_by(username=session['username']).first()
+            if session['username'] != request.form['username'] and account_exists(request.form['username']):
+                flash("An account already exists for this username")
+                return render_template('profile.html')
+            elif request.form['username'] != "" and session['username'] != request.form['username']:
+                current_user.username = request.form['username']
+                no_change = False
+            if current_user.name != request.form['name'] and request.form['name'] != "":
+                current_user.name = request.form['name']
+                no_change = False
+            if request.form['password'] != "":
+                current_user.password = request.form['password']
+                no_change = False
+            if request.files.get(('profile_photo')):
+                file_name = file_upload(request.files.get('profile_photo'), app.config['IMAGE_UPLOAD_FOLDER'], app.config['ALLOWED_IMAGE_EXTENSIONS'])
+                if session['profile_photo'] != app.config['DEFAULT_PROFILE_PHOTO']:
+                    os.unlink(session['profile_photo'])
+                current_user.profile_photo = file_name
+                no_change = False
+            db_session.commit()
+            set_session(current_user)
+            print(no_change)
+            if no_change:
+                flash("No user details were changed as no new values were submitted.", 'success')
+            else:
+                flash("User details were successfully updated.", 'success')
+        except Exception, ex:
+            flash("There was an error updating your details. Please try again later", 'error')
+            print("Exception while updating details: {0}".format(ex))
     return render_template('profile.html')
 
 
@@ -200,11 +302,15 @@ def document_upload():
         tags = (request.form.getlist('tags'))
         user_access_exceptions = (request.form.getlist('user_exceptions'))
 
-        user_name_id_dict = {'name': [name for name in user_access_exceptions if not name.isdigit()], 'id':[[int(id) for id in user_access_exceptions if id.isdigit()]]}
-        tag_text_id_dict = {'text': [text for text in tags if not text.isdigit()], 'id':[[int(id) for id in tags if id.isdigit()]]}
+        user_name_id_dict = {'name': [name for name in user_access_exceptions if not name.isdigit()], 'id':[int(id) for id in user_access_exceptions if id.isdigit()]}
+        tag_text_id_dict = {'text': [text for text in tags if not text.isdigit()], 'id':[int(id) for id in tags if id.isdigit()]}
 
-        saved_tags = Tag.query.filter(Tag.tag_id.in_(tag_text_id_dict['id'])).all()
-        user_exceptions = User.query.filter(User.user_id.in_(user_name_id_dict['id'])).all()
+        saved_tags = []
+        if tag_text_id_dict['id']:
+            saved_tags = Tag.query.filter(Tag.id.in_(tag_text_id_dict['id'])).all()
+        user_exceptions = []
+        if user_name_id_dict['id']:
+            user_exceptions = User.query.filter(User.id.in_(user_name_id_dict['id'])).all()
 
         if request.form.get('document_name') and request.form.get('tags') and 'file' in request.files:
             file = request.files['file']
@@ -223,7 +329,7 @@ def document_upload():
 
                 document = Document(document_name=request.form['document_name'], file_name=saved_file_name,
                 uploader=session['username'], upload_date=todays_date_time,
-                version=1.0, last_edited_by=session['username'], archived=False, hash=doc_hash,
+                version="1.0", last_edited_by=session['username'], archived=False, hash=doc_hash,
                 file_extension=saved_file_name.split('.')[-1], access_level=request.form.getlist("access_level")[0], major_category=predicted_category)
                 for tag in tag_text_id_dict['text']:
                     document.tags.append(Tag(tag))
@@ -232,7 +338,7 @@ def document_upload():
                 if saved_file_name:
                     db_session.add(document)
                     db_session.commit()
-                    upload_event = ChangeLog(document.document_id, todays_date_time, "Initial upload of document", session['username'], document.document_name)
+                    upload_event = ChangeLog(document.id, todays_date_time, "Initial upload of document", session['username'], document.document_name, document.file_name, "1.0")
                     db_session.add(upload_event)
                     db_session.commit()
                     flash("Document uploaded successfully", 'success')
@@ -241,7 +347,7 @@ def document_upload():
                     flash("Document upload failed. Please contact an administrator", 'error')
                 if len(saved_tags) > 0:
                     for tag in saved_tags:
-                        engine.execute("INSERT INTO DocumentTag (tag_id, document_id) VALUES ({0}, {1})".format(tag.tag_id, document.document_id))
+                        engine.execute("INSERT INTO DocumentTag (tag_id, document_id) VALUES ({0}, {1})".format(tag.id, document.id))
             else:
                 flash("This document has been uploaded previously. Please search for the following document: {0}".format(doc_name), 'error')
         else:
@@ -294,40 +400,65 @@ def checkout_document(document_id, version):
     return False
 
 
+def update_tags(document, submitted_tags):
+    existing_tags = []
+    try:
+        document.tags = []
+        db_session.commit()
+        submitted_tags_dict = {'id': [int(tagID) for tagID in submitted_tags if tagID.isdigit()],
+                               'text': [tag_text for tag_text in submitted_tags if not tag_text.isdigit()]}
+        if len(submitted_tags_dict['text']) > 0:
+            existing_tags = Tag.query.filter(Tag.text.in_(submitted_tags_dict['text'])).all()
+        for tag in existing_tags:
+            submitted_tags_dict['text'].remove(tag.text)
+            submitted_tags_dict['id'].append(tag.id)
+        for text in submitted_tags_dict['text']:
+            document.tags.append(Tag(text))
+        for tagID in submitted_tags_dict['id']:
+            engine.execute("INSERT INTO DocumentTag (tag_id, document_id) VALUES ({0}, {1})".format(tagID, document.id))
+        return True
+    except Exception, ex:
+        print('SQL EXCEPTION: {0}'.format(ex))
+        return False
+
+
 def checkin_document():
     try:
         request.files['document'].filename = sanitise_filename(request.files['document'].filename)
-        document = Document.query.filter(Document.document_id == request.form.get("doc_id")).first()
+        document = Document.query.filter(Document.id == request.form.get("doc_id")).first()
+        print(document)
         # the names for the select items are auto generated by concatting tags_for_ and the doc_id
-        tags = (request.form.getlist('tags_for_'+str(document.document_id)))
-        saved_tags = Tag.query.filter(Tag.text.in_(tags)).all()
-        saved_tags_text = [tag.text for tag in saved_tags]
-        for tag in tags:
-            if tag not in saved_tags_text:
-                document.tags.append(Tag(tag))
+        tag_update_successful = update_tags(document, request.form.getlist('tags_for_'+str(document.id)))
         #update the hash value of the document
         document.hash = get_document_hash(request.files['document'])
         #increment document version number
-        document.archive_document(True)
-        document.increment_version_number()
-        result = file_upload(request.files['document'], app.config['DOCUMENT_UPLOAD_FOLDER'], app.config['ALLOWED_DOCUMENT_EXTENSIONS'])
+        archive_filename = document.archive_document(True)
+        upload_successful = file_upload(request.files['document'], app.config['DOCUMENT_UPLOAD_FOLDER'], app.config['ALLOWED_DOCUMENT_EXTENSIONS'])
         document.file_name = request.files['document'].filename
-        if result:
+        if upload_successful and tag_update_successful:
             db_session.commit()
-            flash("The document was updated successfully")
         else:
             #upload fails - move back to original locations
             document.archive_document(archive=False)
         checkin_date_time = datetime.datetime.today()
-        changes = ChangeLog(document.document_id, checkin_date_time, request.form.get('comments'), session['username'], document.document_name)
-        db_session.add(changes)
-        checkout_record=Checkout.query.filter(Checkout.checkout_username==session['username']).filter(Checkout.document_id==document.document_id).first()
-        db_session.delete(checkout_record)
+        previous_event = ChangeLog.query.filter(ChangeLog.document_version == document.version).first()#db_session.query(func.max(ChangeLog.checkin_date))
+        print(previous_event)
+        previous_event.file_name = archive_filename
+        document.increment_version_number()
+        change_object = ChangeLog(document.id, checkin_date_time, request.form.get('comments'), session['username'], document.document_name, document.file_name, document.version)
+        document.changes.append(change_object)
         db_session.commit()
         return True
     except Exception, ex:
+        print("Checkin exception")
         print(ex)
-    return False
+        return False
+
+
+def delete_download_record(document):
+    checkout_record=Checkout.query.filter(Checkout.checkout_username==session['username']).filter(Checkout.document_id==document.id).first()
+    db_session.delete(checkout_record)
+    db_session.commit()
 
 
 @app.route("/get_tags")
@@ -339,7 +470,7 @@ def get_tags():
 
 @app.route("/downloads/<document_id>")
 def download_document(document_id):
-    doc = Document.query.filter(Document.document_id == document_id).first()
+    doc = Document.query.filter(Document.id == document_id).first()
     filename = doc.file_name
     version = doc.version
     if checkout_document(document_id, version):
@@ -359,13 +490,14 @@ def send_user_data():
             if data[1].get('username') and account_exists(data[1]['username']):
                 result = jsonify({'fieldErrors': [{"name": "username",
                                                  "status": 'This username is taken.'}]})
-            update_user = User.query.filter(User.user_id == data[0])
-            update_user.update(data[1])
-            result = jsonify({'data': [update_user.first().to_dict()]})
+            else:
+                update_user = User.query.filter(User.id == data[0])
+                update_user.update(data[1])
+                result = jsonify({'data': [update_user.first().to_dict()]})
         elif changes['action'] == 'create':
             if not account_exists(data[1]['username']):
                 new_user = User(username=data[1]['username'], password=data[1]['password'], name=data[1]['name'],
-                                profile_photo=os.path.join(app.config['IMAGE_UPLOAD_FOLDER'], app.config['DEFAULT_PROFILE_PHOTO']),
+                                profile_photo=app.config['DEFAULT_PROFILE_PHOTO'],
                                 access_level=data[1]['access_level'])
                 db_session.add(new_user)
                 result = jsonify({'data': [new_user.to_dict()]})
@@ -373,7 +505,7 @@ def send_user_data():
                 result = jsonify({'fieldErrors': [{"name": "username",
                                                  "status": 'This username is taken.'}]})
         elif changes['action'] == 'remove':
-            user = User.query.filter(User.user_id == data[0]).first()
+            user = User.query.filter(User.id == data[0]).first()
             db_session.delete(user)
             result = jsonify({"data": []})
         db_session.commit()
@@ -444,12 +576,15 @@ def reboot_server():
 def my_documents():
     #todo: version numbers increment even upon failed updates. bundle all activities together
     if request.method == 'POST':
-        checkin_document()
-        #get all my checkouts
+        success = checkin_document()
+        if success:
+            flash("Document updated successfully", 'success')
+        else:
+            flash("There was an error updating the document. Please try again later", 'error')
     all_checkouts = Checkout.query.filter(Checkout.checkout_username == session['username']).all()
-    doc_ids = [doc.document_id for doc in all_checkouts]
+    doc_ids = [doc.id for doc in all_checkouts]
     #fix here so _in clauses cannot run on empty sequences
-    downloads = Document.query.filter(Document.document_id.in_(doc_ids)).all()
+    downloads = Document.query.filter(Document.id.in_(doc_ids)).all()
     uploads = Document.query.filter(Document.uploader == session['username']).all()
     downloads = [doc for doc in downloads if doc not in uploads]
     checkout_version_dict = {}
@@ -468,6 +603,19 @@ def get_document_timeline(document_id):
     return render_template("timeline.html", history=history)
 
 
+@app.route("/archive/<file_name>")
+def fetch_from_archive(file_name):
+    # :Fixme need a nicer way of doing this (for now just checking the file name contains the '_v- pattern associated with versioned docs
+    if '_v-' in file_name:
+        if ChangeLog.query.filter(ChangeLog.file_name == file_name).first():
+            return send_from_directory(app.config['DOCUMENT_ARCHIVE_FOLDER'], file_name, as_attachment=True)
+    document = Document.query.filter(Document.file_name == file_name).first()
+    print(document)
+    if document:
+        flash('Please use the search page to download the most recent version of this document', 'error')
+        return redirect(url_for('get_document_timeline', document_id=document.id))
+
+
 @app.teardown_appcontext
 def shutdown_session(exception=None):
     db_session.remove()
@@ -481,4 +629,4 @@ def uploaded_file(filename):
                                filename)
 
 if __name__ == "__main__":
-    app.run(threaded=True)
+    app.run(threaded=True, debug=True)

@@ -24,6 +24,24 @@
                         </div>
 
                         <div class="panel-body">
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                </br>
+                                <div class="form-button">
+                                {% for category, message in messages %}
+                                    {% if category == 'success' %}
+                                        <div class="alert alert-success">
+                                        {{ message }}
+                                        </div>
+                                    {% else %}
+                                        <div class="alert alert-danger">
+                                        {{ message }}
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                                </div>
+                            {% endif %}
+                            {% endwith %}
                             <ul class="timeline">
                                 {% for event in history %}
                                     {% if loop.index is divisibleby 2 %}
@@ -42,13 +60,14 @@
                                         {% endif %}
                                     <div class="timeline-panel">
                                         <div class="timeline-heading">
-                                            <h4 class="timeline-title">{{ event.document_name }}</h4>
+                                            <h4 class="timeline-title">{{ event.document_name }}: Version {{ event.document_version }}</h4>
                                             <p>
                                                 <small class="text-muted"><i class="fa fa-time"></i>{{  event.user_name }} @ {{ event.nice_date_format().1 }} on {{ event.nice_date_format().0 }}</small>
                                             </p>
                                         </div>
                                         <div class="timeline-body">
-                                            <p>{{  event.comments }}</p>
+                                            <p>{{ event.comments }}</p>
+                                            <p><a href="/archive/{{ event.file_name }}">Download</a></p>
                                         </div>
                                     </div>
                                 </li>
